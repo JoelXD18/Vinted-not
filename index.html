@@ -75,6 +75,9 @@
   </div>
 
   <div class="card">
+    <label for="title">Título de la notificación</label>
+    <input type="text" id="title" value="Avisos" maxlength="40">
+
     <label for="msg">Texto de la notificación</label>
     <input type="text" id="msg" value="¡Es hora de tu recordatorio!" maxlength="120">
 
@@ -102,6 +105,7 @@
 </div>
 
 <script>
+  const titleInput = document.getElementById('title');
   const msgInput = document.getElementById('msg');
   const intervalSelect = document.getElementById('interval');
   const startBtn = document.getElementById('startBtn');
@@ -129,23 +133,25 @@
       return;
     }
 
+    const title = titleInput.value.trim() || 'Avisos';
     const text = msgInput.value.trim() || '¡Es hora de tu recordatorio!';
     const seconds = parseInt(intervalSelect.value, 10);
 
     // Fire one immediately, then repeat
-    fireNotification(text);
-    timerId = setInterval(() => fireNotification(text), seconds * 1000);
+    fireNotification(title, text);
+    timerId = setInterval(() => fireNotification(title, text), seconds * 1000);
 
     startBtn.style.display = 'none';
     stopBtn.style.display = 'block';
+    titleInput.disabled = true;
     msgInput.disabled = true;
     intervalSelect.disabled = true;
     setStatus(true, 'cada ' + intervalSelect.options[intervalSelect.selectedIndex].text);
   }
 
-  function fireNotification(text) {
+  function fireNotification(title, text) {
     try {
-      new Notification('Avisos', { body: text, icon: 'icon.png' });
+      new Notification(title, { body: text, icon: 'icon.png' });
     } catch (e) {
       console.log('No se pudo mostrar la notificación', e);
     }
@@ -156,6 +162,7 @@
     timerId = null;
     startBtn.style.display = 'block';
     stopBtn.style.display = 'none';
+    titleInput.disabled = false;
     msgInput.disabled = false;
     intervalSelect.disabled = false;
     setStatus(false);
