@@ -1,0 +1,17 @@
+{
+  "name": "Avisos",
+  "short_name": "Avisos",
+  "description": "App de recordatorios con notificaciones configurables - proyecto de clase",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#eef0f3",
+  "theme_color": "#0a2647",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
