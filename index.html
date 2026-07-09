@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avisos</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Avisos">
+<meta name="theme-color" content="#0a2647">
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  body {
+    font-family:'Helvetica Neue', Arial, sans-serif;
+    background:#eef0f3;
+    display:flex;
+    justify-content:center;
+    min-height:100vh;
+  }
+  .app { width:100%; max-width:430px; min-height:100vh; background:#f4f5f7; display:flex; flex-direction:column; }
+
+  .hero {
+    padding:48px 24px 34px;
+    background:linear-gradient(160deg, #0c2340 0%, #123a5e 45%, #1c5678 100%);
+    color:#fff;
+  }
+  .hero h1 { font-family:Georgia,'Times New Roman',serif; font-size:30px; }
+  .hero p { margin-top:8px; font-size:13px; opacity:.75; }
+
+  .card {
+    background:#fff;
+    margin:-18px 20px 0;
+    border-radius:16px;
+    padding:22px 20px;
+    box-shadow:0 10px 24px rgba(10,30,60,.12);
+  }
+  label { display:block; font-size:13px; font-weight:700; color:#0a2647; margin-bottom:8px; }
+  input[type=text] {
+    width:100%; padding:13px 14px; border:1.5px solid #dfe4ea; border-radius:10px;
+    font-size:15px; color:#0a2647; margin-bottom:18px;
+  }
+  select {
+    width:100%; padding:13px 14px; border:1.5px solid #dfe4ea; border-radius:10px;
+    font-size:15px; color:#0a2647; margin-bottom:22px; background:#fff;
+  }
+  .btn {
+    width:100%; padding:15px; border:none; border-radius:10px;
+    font-size:15px; font-weight:700; cursor:pointer; margin-bottom:10px;
+  }
+  .btn-start { background:#0a2647; color:#fff; }
+  .btn-start:disabled { background:#aeb8c4; }
+  .btn-stop { background:#f4f5f7; color:#c0524c; border:1.5px solid #f0d9d7; }
+  .status {
+    margin-top:16px; padding:12px 14px; border-radius:10px;
+    font-size:13px; font-weight:600; text-align:center;
+  }
+  .status.on { background:#e5f5ea; color:#1a8f4c; }
+  .status.off { background:#f4f5f7; color:#7c8794; }
+
+  .note {
+    margin:22px 24px 0; font-size:12px; color:#8b96a3; line-height:1.5;
+  }
+  .disclosure { text-align:center; font-size:10px; color:#b7bfc9; padding:24px 24px 30px; margin-top:auto; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hero">
+    <h1>Avisos</h1>
+    <p>Configura un recordatorio y el intervalo con el que lo recibes.</p>
+  </div>
+
+  <div class="card">
+    <label for="msg">Texto de la notificación</label>
+    <input type="text" id="msg" value="¡Es hora de tu recordatorio!" maxlength="120">
+
+    <label for="interval">Repetir cada</label>
+    <select id="interval">
+      <option value="10">10 segundos (prueba)</option>
+      <option value="60">1 minuto</option>
+      <option value="300" selected>5 minutos</option>
+      <option value="900">15 minutos</option>
+      <option value="1800">30 minutos</option>
+      <option value="3600">1 hora</option>
+    </select>
+
+    <button class="btn btn-start" id="startBtn">Activar avisos</button>
+    <button class="btn btn-stop" id="stopBtn" style="display:none;">Detener avisos</button>
+
+    <div class="status off" id="status">Avisos desactivados</div>
+  </div>
+
+  <p class="note">
+    Mientras esta app esté abierta (en primer o segundo plano de la pestaña), recibirás una notificación con el texto e intervalo que elijas. Si cierras la app del todo o bloqueas el móvil durante mucho tiempo, iOS puede pausar el temporizador — es una limitación de Safari, no de esta app.
+  </p>
+
+  <p class="disclosure">Proyecto de clase — app de avisos locales de prueba.</p>
+</div>
+
+<script>
+  const msgInput = document.getElementById('msg');
+  const intervalSelect = document.getElementById('interval');
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const status = document.getElementById('status');
+
+  let timerId = null;
+
+  function setStatus(on, extra) {
+    status.textContent = on ? ('Avisos activados — ' + extra) : 'Avisos desactivados';
+    status.className = 'status ' + (on ? 'on' : 'off');
+  }
+
+  async function start() {
+    if (!('Notification' in window)) {
+      alert('Este navegador no soporta notificaciones.');
+      return;
+    }
+    let perm = Notification.permission;
+    if (perm !== 'granted') {
+      perm = await Notification.requestPermission();
+    }
+    if (perm !== 'granted') {
+      alert('Necesitas permitir las notificaciones para activar los avisos.');
+      return;
+    }
+
+    const text = msgInput.value.trim() || '¡Es hora de tu recordatorio!';
+    const seconds = parseInt(intervalSelect.value, 10);
+
+    // Fire one immediately, then repeat
+    fireNotification(text);
+    timerId = setInterval(() => fireNotification(text), seconds * 1000);
+
+    startBtn.style.display = 'none';
+    stopBtn.style.display = 'block';
+    msgInput.disabled = true;
+    intervalSelect.disabled = true;
+    setStatus(true, 'cada ' + intervalSelect.options[intervalSelect.selectedIndex].text);
+  }
+
+  function fireNotification(text) {
+    try {
+      new Notification('Avisos', { body: text, icon: 'icon.png' });
+    } catch (e) {
+      console.log('No se pudo mostrar la notificación', e);
+    }
+  }
+
+  function stop() {
+    if (timerId) clearInterval(timerId);
+    timerId = null;
+    startBtn.style.display = 'block';
+    stopBtn.style.display = 'none';
+    msgInput.disabled = false;
+    intervalSelect.disabled = false;
+    setStatus(false);
+  }
+
+  startBtn.addEventListener('click', start);
+  stopBtn.addEventListener('click', stop);
+</script>
+</body>
+</html>
