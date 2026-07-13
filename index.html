@@ -135,7 +135,7 @@
 
     const title = titleInput.value.trim() || 'Avisos';
     const text = msgInput.value.trim() || '¡Es hora de tu recordatorio!';
-    const seconds = parseInt(intervalSelect.value, 10);
+    const seconds = parseInt(intervalSelect.value, 1);
 
     // Fire one immediately, then repeat
     fireNotification(title, text);
